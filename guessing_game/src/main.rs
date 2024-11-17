@@ -17,7 +17,17 @@ fn main() {
             .read_line(&mut guess)
             .expect("読み込みに失敗しました");
 
-        let guess: u32 = guess.trim().parse().expect("Please type a number");
+        let guess: u32 = match guess.trim().parse() {
+            Ok(num) if num >= 1 && num <= 100 => num,
+            Ok(_) => {
+                println!("1~100までの数値を入力してください");
+                continue;
+            }
+            Err(_) => {
+                println!("数字を入力してください");
+                continue;
+            }
+        };
 
         println!("You guessed: {}", guess);
 
