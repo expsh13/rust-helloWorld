@@ -5,4 +5,7 @@ fn main() {
     };
 
     println!("The value of y is: {}", y);
+
+    let r = "hello";
+    let s = String::from("hello");
 }
