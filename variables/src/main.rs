@@ -1,12 +1,7 @@
 fn main() {
-    let s1 = String::from("hello");
+    let mut s = String::from("hello");
 
-    let len = calculate_length(&s1);
-
-    // '{}'の長さは、{}です
-    println!("The length of '{}' is {}.", s1, len);
-}
-
-fn calculate_length(s: &String) -> usize {
-    s.len()
+    let _r1 = &s; // 問題なし
+    let _r2 = &s; // 問題なし
+    let _r3 = &mut s; // 大問題！
 }
