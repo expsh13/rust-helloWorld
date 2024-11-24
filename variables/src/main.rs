@@ -1,7 +1,8 @@
 fn main() {
-    {
-        let s = String::from("hello"); // sはここから有効になる
+    let x = 5;
+    let y = x;
 
-        // sで作業をする
+    fn test() {
+        let a = 2;
     }
 }
