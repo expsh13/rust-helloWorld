@@ -1,8 +1,6 @@
 fn main() {
-    let x = 5;
-    let y = x;
+    let s1 = String::from("hello");
+    let s2 = s1;
 
-    fn test() {
-        let a = 2;
-    }
+    println!("{}, world!", s1);
 }
