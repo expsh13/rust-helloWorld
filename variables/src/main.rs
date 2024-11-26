@@ -1,20 +1,32 @@
-fn first_word(s: &str) -> &str {
-    let bytes: &[u8] = s.as_bytes(); //バイト配列に
-
-    for (i, &item) in bytes.iter().enumerate() {
-        if item == b' ' {
-            return &s[0..i];
-        }
+fn main() {
+    struct User {
+        username: String,
+        email: String,
+        sign_in_count: u64,
+        active: bool,
     }
 
-    &s[..]
-}
+    let mut user1 = User {
+        email: String::from("someone@example.com"),
+        username: String::from("someusername123"),
+        active: true,
+        sign_in_count: 1,
+    };
 
-fn main() {
-    let s = String::from("hello world");
-    let my_string_literal = "hello world";
+    user1.email = String::from("anotheremail@example.com");
 
-    let word = first_word(&s[..]);
-    let word = first_word(my_string_literal);
-    println!("the first word is: {}", word);
+    let user2 = User {
+        email: String::from("another@example.com"),
+        username: String::from("anotherusername567"),
+        ..user1
+    };
+
+    fn build_user(email: String, username: String) -> User {
+        User {
+            email,
+            username,
+            active: true,
+            sign_in_count: 1,
+        }
+    }
 }
