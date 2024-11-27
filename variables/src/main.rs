@@ -8,19 +8,34 @@ impl Rectangle {
     fn area(&self) -> u32 {
         self.width * self.height
     }
+    fn can_hold(&self, other: &Rectangle) -> bool {
+        self.width > other.width && self.height > other.height
+    }
+    fn square(size: u32) -> Rectangle {
+        Rectangle {
+            width: size,
+            height: size,
+        }
+    }
 }
 
 fn main() {
-    let width1 = 30;
-    let height1 = 50;
     let rect1 = Rectangle {
-        width: width1,
-        height: height1,
+        width: 30,
+        height: 50,
+    };
+    let rect2 = Rectangle {
+        width: 10,
+        height: 40,
+    };
+    let rect3 = Rectangle {
+        width: 60,
+        height: 45,
     };
 
-    println!(
-        // 長方形の面積は、{}平方ピクセルです
-        "The area of the rectangle is {} square pixels.",
-        rect1.area()
-    );
+    let square = Rectangle::square(3);
+
+    // rect1にrect2ははまり込む？
+    println!("Can rect1 hold rect2? {}", rect1.can_hold(&rect2));
+    println!("Can rect1 hold rect3? {}", rect1.can_hold(&rect3));
 }
