@@ -4,6 +4,12 @@ struct Rectangle {
     height: u32,
 }
 
+impl Rectangle {
+    fn area(&self) -> u32 {
+        self.width * self.height
+    }
+}
+
 fn main() {
     let width1 = 30;
     let height1 = 50;
@@ -12,16 +18,9 @@ fn main() {
         height: height1,
     };
 
-    // rect1は{}です
-    println!("rect1 is {:#?}", rect1);
-
-    // println!(
-    //     // 長方形の面積は、{}平方ピクセルです
-    //     "The area of the rectangle is {} square pixels.",
-    //     area(&rect1)
-    // );
-}
-
-fn area(rectangle: &Rectangle) -> u32 {
-    rectangle.width * rectangle.height
+    println!(
+        // 長方形の面積は、{}平方ピクセルです
+        "The area of the rectangle is {} square pixels.",
+        rect1.area()
+    );
 }
