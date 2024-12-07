@@ -1,7 +1,7 @@
 use std::io::stdin;
 
 fn main() {
-    let mut memory = Memory { slots: vec![] };
+    let mut memory = Memory::new();
     let mut prev_result: f64 = 0.0;
     for line in stdin().lines() {
         // 行毎読み込み
@@ -35,36 +35,38 @@ fn print_output(value: f64) {
     println!(" => {}", value);
 }
 
+use std::collections::{hash_map::Entry, HashMap};
+
 struct Memory {
-    slots: Vec<(String, f64)>,
+    slots: HashMap<String, f64>,
 }
 
 impl Memory {
+    fn new() -> Self {
+        Self {
+            slots: HashMap::new(),
+        }
+    }
     fn add_and_print(&mut self, token: &str, prev_result: f64) {
         // メモリ名を抜き出す
-        let slot_name = &token[3..token.len() - 1];
-        // 全てのメモリを探索
-        for slot in self.slots.iter_mut() {
-            if slot.0 == slot_name {
-                slot.1 += prev_result;
-                print_output(slot.1);
-                return;
+        let slot_name = token[3..token.len() - 1].to_string();
+        match self.slots.entry(slot_name) {
+            Entry::Occupied(mut entry) => {
+                // メモリが見つかった
+                *entry.get_mut() += prev_result;
+                print_output(*entry.get());
+            }
+            Entry::Vacant(entry) => {
+                // メモリ見つからなかった
+                entry.insert(prev_result);
+                print_output(prev_result);
             }
         }
-        // メモリがない場合
-        self.slots.push((slot_name.to_string(), prev_result));
-        print_output(prev_result);
     }
     fn eval_token(&self, token: &str) -> f64 {
         if token.starts_with("mem") {
             let slot_name = &token[3..];
-            for slot in &self.slots {
-                if slot.0 == slot_name {
-                    return slot.1;
-                }
-            }
-            // メモリがない場合初期値
-            0.0
+            self.slots.get(slot_name).copied().unwrap_or(0.0)
         } else {
             token.parse().unwrap()
         }
