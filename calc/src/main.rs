@@ -1,3 +1,4 @@
+use std::collections::{hash_map::Entry, HashMap};
 use std::io::stdin;
 
 fn main() {
@@ -36,8 +37,6 @@ fn print_output(value: f64) {
     println!(" => {}", value);
 }
 
-use std::collections::{hash_map::Entry, HashMap};
-
 struct Memory {
     slots: HashMap<String, f64>,
 }
@@ -68,6 +67,7 @@ impl Memory {
     }
 }
 
+#[derive(Debug, PartialEq)]
 enum Token {
     Number(f64),
     MemoryRef(String),
@@ -77,6 +77,8 @@ enum Token {
     Minus,
     Asterisk,
     Slash,
+    LParen,
+    RParen,
 }
 impl Token {
     fn parse(value: &str) -> Self {
@@ -85,6 +87,8 @@ impl Token {
             "-" => Self::Minus,
             "*" => Self::Asterisk,
             "/" => Self::Slash,
+            "(" => Self::LParen,
+            ")" => Self::RParen,
             _ if value.starts_with("mem") => {
                 let mut memory_name = value[3..].to_string();
                 if value.ends_with('+') {
@@ -105,21 +109,14 @@ impl Token {
         text.split(char::is_whitespace).map(Self::parse).collect()
     }
 }
-fn eval_token(token: &Token, memory: &Memory) -> f64 {
-    match token {
-        Token::Number(value) => *value,
-        Token::MemoryRef(memory_name) => memory.get(memory_name),
-        _ => {
-            unreachable!()
-        }
-    }
-}
 
 fn eval_expression(tokens: &[Token], memory: &Memory) -> f64 {
-    eval_additive_expression(tokens, memory)
+    let (result, index) = eval_additive_expression(tokens, 0, memory);
+    assert_eq!(tokens.len(), index);
+    result
 }
-fn eval_additive_expression(tokens: &[Token], memory: &Memory) -> f64 {
-    let mut index = 0;
+fn eval_additive_expression(tokens: &[Token], index: usize, memory: &Memory) -> (f64, usize) {
+    let mut index = index;
     let mut result;
     (result, index) = eval_multiplicative_expression(tokens, index, memory);
     while index < tokens.len() {
@@ -137,24 +134,41 @@ fn eval_additive_expression(tokens: &[Token], memory: &Memory) -> f64 {
             _ => break,
         }
     }
-    result
+    (result, index)
 }
 fn eval_multiplicative_expression(tokens: &[Token], index: usize, memory: &Memory) -> (f64, usize) {
     let mut index = index;
-    let mut result = eval_token(&tokens[index], memory);
-    index += 1;
+    let mut result;
+    (result, index) = eval_primary_expression(tokens, index, memory);
     while index < tokens.len() {
         match &tokens[index] {
             Token::Asterisk => {
-                result *= eval_token(&tokens[index + 1], memory);
-                index += 2;
+                let (value, next) = eval_primary_expression(tokens, index + 1, memory);
+                result *= value;
+                index = next;
             }
             Token::Slash => {
-                result /= eval_token(&tokens[index + 1], memory);
-                index += 2;
+                let (value, next) = eval_primary_expression(tokens, index + 1, memory);
+                result /= value;
+                index = next;
             }
             _ => break,
         }
     }
     (result, index)
+}
+fn eval_primary_expression(tokens: &[Token], index: usize, memory: &Memory) -> (f64, usize) {
+    let first_token = &tokens[index];
+    match first_token {
+        Token::LParen => {
+            let (result, next) = eval_additive_expression(tokens, index + 1, memory);
+            assert_eq!(Token::RParen, tokens[next]);
+            (result, next + 1)
+        }
+        Token::Number(value) => (*value, index + 1),
+        Token::MemoryRef(memory_name) => (memory.get(memory_name), index + 1),
+        _ => {
+            unreachable!()
+        }
+    }
 }
