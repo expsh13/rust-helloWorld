@@ -81,6 +81,15 @@ fn add_schedule(subject: String, start: NaiveDateTime, end: NaiveDateTime) {
         start,
         end,
     };
+
+    // 重複判定
+    for schedule in &calendar.schedules {
+        if schedule.start < new_schedule.end {
+            println!("予定の重複！！");
+            return;
+        }
+    }
+
     calendar.schedules.push(new_schedule);
 
     {
