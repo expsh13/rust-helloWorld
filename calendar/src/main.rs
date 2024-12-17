@@ -4,7 +4,7 @@ use std::{
 };
 
 use chrono::NaiveDateTime;
-use clap::{Parser, Subcommand};
+use clap::{error, Parser, Subcommand};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -49,46 +49,80 @@ enum Commands {
 fn main() {
     let options = Cli::parse();
     match options.command {
-        Commands::List => {
-            let calendar = read_calendar();
-            show_list(&calendar);
-        }
+        Commands::List => match read_calendar() {
+            Ok(calendar) => {
+                show_list(&calendar);
+            }
+            Err(error) => {
+                println!("カレンダーの読み込みに失敗した");
+            }
+        },
         Commands::Add {
             subject,
             start,
             end,
-        } => {
-            let mut calendar = read_calendar();
-            if add_schedule(&mut calendar, subject, start, end) {
-                save_calendar(&calendar);
-                println!("予定を追加しました")
-            } else {
-                println!("予定の重複")
+        } => match read_calendar() {
+            Ok(mut calendar) => {
+                if add_schedule(&mut calendar, subject, start, end) {
+                    save_calendar(&calendar);
+                    println!("予定を追加しました")
+                } else {
+                    println!("予定の重複")
+                }
             }
-        }
-        Commands::Delete { id } => {
-            let mut calendar = read_calendar();
-            if delete_schedule(&mut calendar, id) {
-                save_calendar(&calendar);
-                println!("予定を削除しました");
-            } else {
-                println!("IDが不正です");
+            Err(error) => {
+                println!("カレンダーの読み込みに失敗した");
             }
-        }
+        },
+        Commands::Delete { id } => match read_calendar() {
+            Ok(mut calendar) => {
+                if delete_schedule(&mut calendar, id) {
+                    save_calendar(&calendar);
+                    println!("予定を削除しました");
+                } else {
+                    println!("IDが不正です");
+                }
+            }
+            Err(error) => {
+                println!("カレンダーの読み込みに失敗した");
+            }
+        },
     }
 }
 
-fn read_calendar() -> Calendar {
-    let file = File::open(SCHEDULE_FILE).unwrap();
+fn read_calendar() -> Result<Calendar, std::io::Error> {
+    let file = File::open(SCHEDULE_FILE)?;
     let reader = BufReader::new(file);
-    serde_json::from_reader(reader).unwrap()
+    let calendar = serde_json::from_reader(reader).unwrap();
+    Ok(calendar)
 }
 
-fn save_calendar(calendar: &Calendar) {
-    let file = File::create(SCHEDULE_FILE).unwrap();
+fn save_calendar(calendar: &Calendar) -> Result<(), MyError> {
+    let file = File::create(SCHEDULE_FILE)?;
     let writer = BufWriter::new(file);
-    serde_json::to_writer(writer, calendar).unwrap()
+    serde_json::to_writer(writer, calendar)?;
+    Ok(())
 }
+#[derive(thiserror::Error, Debug)]
+enum MyError {
+    #[error("io error: {0}")]
+    Io(#[from] std::io::Error),
+
+    #[error("json error: {0}")]
+    Json(#[from] serde_json::Error),
+}
+
+// impl From<std::io::Error> for MyError {
+//     fn from(err: std::io::Error) -> Self {
+//         MyError::Io(err)
+//     }
+// }
+
+// impl From<serde_json::Error> for MyError {
+//     fn from(err: serde_json::Error) -> Self {
+//         MyError::Json(err)
+//     }
+// }
 
 fn show_list(calendar: &Calendar) {
     // 予定の表示
