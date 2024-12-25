@@ -1,7 +1,13 @@
-use std::iter::Iterator;
+use std::{
+    fs::File,
+    io::{Read, Write},
+    iter::Iterator,
+    path::Path,
+};
 
+use serde::{Deserialize, Serialize};
 fn main() {
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, Serialize, Deserialize)]
     enum List<T> {
         Node { data: T, next: Box<List<T>> },
         Nil,
@@ -45,13 +51,37 @@ fn main() {
     }
 
     let list = List::new().cons(1).cons(2).cons(3);
-    for i in list.iter() {
-        println!("{i}");
-    }
-    println!();
 
-    let mut it = list.iter();
-    println!("{:?}", it.next().unwrap());
-    println!("{:?}", it.next().unwrap());
-    println!("{:?}", it.next().unwrap());
+    let json = serde_json::to_string(&list).unwrap();
+    println!("JSON: {} bytes {json}", json.len());
+
+    let yml = serde_yaml::to_string(&list).unwrap();
+    println!("YAML: {} bytes {yml}", yml.len());
+
+    let msgpack = rmp_serde::to_vec(&list).unwrap();
+    println!("MessagePack: {} bytes", msgpack.len());
+
+    let list = serde_json::from_str::<List<i32>>(&json).unwrap();
+    println!("List: {:?}", list);
+
+    let list = serde_yaml::from_str::<List<i32>>(&yml).unwrap();
+    println!("List: {:?}", list);
+
+    let list = rmp_serde::from_slice::<List<i32>>(&msgpack).unwrap();
+    println!("List: {:?}", list);
+
+    // ファイルへの書き出し
+    let path = Path::new("test.yml");
+    let mut f = File::create(path).unwrap();
+    f.write_all(yml.as_bytes()).unwrap();
+
+    // ファイルからの読み込み
+    let path = Path::new("test.yml");
+    let mut f = File::open(path).unwrap();
+    let mut yml = String::new();
+    f.read_to_string(&mut yml).unwrap();
+
+    // デシリアライズ
+    let list = serde_yaml::from_str::<List<i32>>(&yml).unwrap();
+    println!("List: {:?}", list);
 }
