@@ -43,4 +43,15 @@ fn main() {
             }
         }
     }
+
+    let list = List::new().cons(1).cons(2).cons(3);
+    for i in list.iter() {
+        println!("{i}");
+    }
+    println!();
+
+    let mut it = list.iter();
+    println!("{:?}", it.next().unwrap());
+    println!("{:?}", it.next().unwrap());
+    println!("{:?}", it.next().unwrap());
 }
