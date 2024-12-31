@@ -41,3 +41,48 @@ impl Display for ParserError {
         }
     }
 }
+
+impl Error for ParserError {}
+
+/// 特殊文字のエスケープ
+fn parse_escape(pos: usize, c: char) -> Result<AST, ParserError> {
+    // posが現在の文字位置、cがエスケープする特殊文字
+    match c {
+        '\\' | '+' | '*' | '?' | '|' | '(' | ')' => Ok(AST::Char(c)),
+        _ => {
+            let err = ParserError::InvalidEscape(pos, c);
+            Err(err)
+        }
+    }
+}
+
+/// parse_plus_star_question関数で利用する列挙型
+enum PSQ {
+    Plus,
+    Star,
+    Question,
+}
+
+/// +、*、?ASTに変換
+///
+/// 後置記法で、+、*、?の前にパターンがない場合はエラー
+///
+/// 例：*ab、 abc | +など
+fn parse_plus_star_question(
+    seq: &mut Vec<AST>,
+    ast_type: PSQ,
+    pos: usize,
+) -> Result<(), ParserError> {
+    if let Some(prev) = seq.pop() {
+        let ast = match ast_type {
+            PSQ::Plus => AST::Plus(Box::new(prev)),
+            PSQ::Star => AST::Star(Box::new(prev)),
+            PSQ::Question => AST::Question(Box::new(prev)),
+        };
+        seq.push(ast);
+        Ok(())
+    } else {
+        let err = ParserError::NoPrev(pos);
+        Err(err)
+    }
+}
